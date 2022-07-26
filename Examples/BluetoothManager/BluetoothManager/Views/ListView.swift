@@ -21,9 +21,7 @@ struct BluetoothPeripheralListView: View {
                   action: AppAction.connectedPeripheralListItem(id:action:)
                 )
               ) { peripheralStore in
-                NavigationLink(destination: {
-
-                }) {
+                NavigationLink(destination: DetailView(store: peripheralStore)) {
                   ListItemView(store: peripheralStore)
                 }
               }
