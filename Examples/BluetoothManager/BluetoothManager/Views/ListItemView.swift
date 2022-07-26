@@ -8,12 +8,12 @@ struct ListItemView: View {
 
   var body: some View {
     WithViewStore(store) { viewStore in
-      let localName = viewStore.advertismentData?.localName
+      let name = viewStore.peripheral.name() ?? viewStore.advertismentData?.localName
 
       HStack {
         VStack(alignment: .leading) {
-          Text(localName ?? "Unnamed")
-            .foregroundColor(localName == nil ? Color.gray : nil)
+          Text(name ?? "Unnamed")
+            .foregroundColor(name == nil ? Color.gray : nil)
 
           if let rssi = viewStore.rssi {
             Text("RSSI: \(rssi)")
