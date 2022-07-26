@@ -18,6 +18,7 @@ public struct CentralManager {
     // Monitoring the Central Manager’s States
     case didUpdateState(CBManagerState)
     case willRestoreState(RestorationOptions)
+    case didUpdateAuthorizationState(CBManagerAuthorization)
     case didUpdateScanningState(Bool)
 
     // Monitoring the Central Manager’s Authorization

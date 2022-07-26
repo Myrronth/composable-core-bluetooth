@@ -21,12 +21,28 @@ extension Peripheral {
       .share()
       .eraseToEffect()
 
-    let deferred = Deferred {
+    let deferredStatePublisher = Deferred {
       peripheral
         .publisher(for: \.state)
-        .map { state in
-          CentralManager.Action.peripheral(identifier, .didUpdateState(state))
-        }
+        .map { CentralManager.Action.peripheral(identifier, .didUpdateState($0)) }
+        .eraseToAnyPublisher()
+    }
+      .share()
+      .eraseToEffect()
+
+    let deferredCanSendWriteWithoutResponsePublisher = Deferred {
+      peripheral
+        .publisher(for: \.canSendWriteWithoutResponse)
+        .map{ CentralManager.Action.peripheral(identifier, .didUpdateCanSendWriteWithoutResponse($0)) }
+        .eraseToAnyPublisher()
+    }
+      .share()
+      .eraseToEffect()
+
+    let deferredAncsAuthorizedPublisher = Deferred {
+      peripheral
+        .publisher(for: \.ancsAuthorized)
+        .map{ CentralManager.Action.peripheral(identifier, .didUpdateAncsAuthorized($0)) }
         .eraseToAnyPublisher()
     }
       .share()
@@ -36,7 +52,12 @@ extension Peripheral {
       rawValue: peripheral,
       identifier: identifier,
       name: { peripheral.name },
-      delegate: { .merge(delegate, deferred) },
+      delegate: { .merge(
+        delegate,
+        deferredStatePublisher,
+        deferredCanSendWriteWithoutResponsePublisher,
+        deferredAncsAuthorizedPublisher
+      ) },
       discoverServices: { serviceUUIDs in
         .fireAndForget {
           peripheral.discoverServices(serviceUUIDs)

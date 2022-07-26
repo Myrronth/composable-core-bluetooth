@@ -29,10 +29,12 @@ public struct Peripheral {
     // Retrieving a Peripheral’s RSSI Data
     case didReadRSSI(NSNumber, Error?)
 
-    // Monitoring Changes to a Peripheral’s Name or Services
-    case didUpdateState(CBPeripheralState)
+    // Monitoring Changes to a Peripheral’s Properties
     case didUpdateName
     case didModifyServices([CBService])
+    case didUpdateState(CBPeripheralState)
+    case didUpdateCanSendWriteWithoutResponse(Bool)
+    case didUpdateAncsAuthorized(Bool)
 
     // Monitoring L2CAP Channels
     case didOpen(CBL2CAPChannel?, Error?)
