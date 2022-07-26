@@ -5,16 +5,16 @@ import CoreBluetooth
 
 let appView: () -> BluetoothPeripheralListView = {
   let bluetoothManager = CentralManager.live()
-  let reducer = BluetoothPeripheralListReducer
+  let reducer = appReducer
 
   return BluetoothPeripheralListView(
     store: Store(
-      initialState: BluetoothPeripheralListState(
+      initialState: AppState(
         shouldStartBluetoothScanningWhenPoweredOn: true,
         isBluetoothScanning: false
       ),
       reducer: reducer,
-      environment: BluetoothPeripheralListEnvironment(
+      environment: AppEnvironment(
         bluetoothManager: bluetoothManager,
         mainQueue: DispatchQueue.main.eraseToAnyScheduler()
       )
