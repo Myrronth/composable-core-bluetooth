@@ -156,7 +156,6 @@ let BluetoothPeripheralListReducer = Reducer<BluetoothPeripheralListState, Bluet
               return .none
             }
           default:
-            assertionFailure("Bluetooth state is \(bluetoothState).")
             return .none
         }
 
