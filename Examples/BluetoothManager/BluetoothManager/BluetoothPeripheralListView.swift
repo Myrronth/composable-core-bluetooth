@@ -293,7 +293,7 @@ struct BluetoothPeripheralListView_Previews: PreviewProvider {
           ),
           reducer: BluetoothPeripheralListReducer,
           environment: BluetoothPeripheralListEnvironment(
-            bluetoothManager: CentralManager.live(),
+            bluetoothManager: CentralManager.mock(delegate: { .none }),
             mainQueue: DispatchQueue.main.eraseToAnyScheduler()
           )
         )
@@ -306,7 +306,7 @@ struct BluetoothPeripheralListView_Previews: PreviewProvider {
           ),
           reducer: BluetoothPeripheralListReducer,
           environment: BluetoothPeripheralListEnvironment(
-            bluetoothManager: CentralManager.live(),
+            bluetoothManager: CentralManager.mock(delegate: { .none }),
             mainQueue: DispatchQueue.main.eraseToAnyScheduler()
           )
         )
