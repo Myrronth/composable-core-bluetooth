@@ -1,6 +1,6 @@
 # Composable Core Bluetooth
 
-Composable Core Bluetooth is library that bridges [the Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture) and [Core Bluetooth](https://developer.apple.com/documentation/corebluetooth).
+Composable Core Bluetooth is a library that bridges [the Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture) and [Core Bluetooth](https://developer.apple.com/documentation/corebluetooth).
 
 * [Example](#example)
 * [Basic usage](#basic-usage)

@@ -21,7 +21,7 @@ extension Peripheral {
       .share()
       .eraseToEffect()
 
-    let deffered = Deferred {
+    let deferred = Deferred {
       peripheral
         .publisher(for: \.state)
         .map { state in
@@ -36,7 +36,7 @@ extension Peripheral {
       rawValue: peripheral,
       identifier: identifier,
       name: { peripheral.name },
-      delegate: { .merge(delegate, deffered) },
+      delegate: { .merge(delegate, deferred) },
       discoverServices: { serviceUUIDs in
         .fireAndForget {
           peripheral.discoverServices(serviceUUIDs)

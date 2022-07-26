@@ -29,7 +29,7 @@ extension CentralManager {
       .share()
       .eraseToEffect()
 
-    let deffered = Deferred {
+    let deferred = Deferred {
       manager
         .publisher(for: \.isScanning)
         .map(CentralManager.Action.didUpdateScanningState)
@@ -39,7 +39,7 @@ extension CentralManager {
     .eraseToEffect()
 
     return Self(
-      delegate: { .merge(delegate, deffered) },
+      delegate: { .merge(delegate, deferred) },
       state: { manager.state },
       authorization: {
         if #available(iOS 13.1, *) {
