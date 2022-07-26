@@ -302,7 +302,61 @@ struct BluetoothPeripheralListView_Previews: PreviewProvider {
       BluetoothPeripheralListView(
         store: Store(
           initialState: BluetoothPeripheralListState(
-            isBluetoothScanning: true
+            isBluetoothScanning: true,
+            discoveredPeripherals: IdentifiedArrayOf(uniqueElements: [
+              BluetoothPeripheralListItemState(
+                id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!,
+                peripheral: Peripheral.mock(
+                  identifier: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+                  name: { nil },
+                  delegate: { .none },
+                  services: { nil },
+                  state: { .disconnected },
+                  canSendWriteWithoutResponse: { false },
+                  readRSSI: { .none },
+                  ancsAuthorized: { false }
+                ),
+                advertismentData: .init(
+                  localName: "MEATER+E",
+                  manufacturerData: nil,
+                  serviceData: nil,
+                  serviceUUIDs: nil,
+                  overflowServiceUUIDs: nil,
+                  solicitedServiceUUIDs: nil,
+                  txPowerLevel: nil,
+                  isConnectable: true
+                ),
+                rssi: -51,
+                cancellableID: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
+              )
+            ]),
+            connectedPeripherals: IdentifiedArrayOf(uniqueElements: [
+              BluetoothPeripheralListItemState(
+                id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!,
+                peripheral: Peripheral.mock(
+                  identifier: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+                  name: { nil },
+                  delegate: { .none },
+                  services: { nil },
+                  state: { .connected },
+                  canSendWriteWithoutResponse: { false },
+                  readRSSI: { .none },
+                  ancsAuthorized: { false }
+                ),
+                advertismentData: .init(
+                  localName: "MEATER+E",
+                  manufacturerData: nil,
+                  serviceData: nil,
+                  serviceUUIDs: nil,
+                  overflowServiceUUIDs: nil,
+                  solicitedServiceUUIDs: nil,
+                  txPowerLevel: nil,
+                  isConnectable: true
+                ),
+                rssi: -51,
+                cancellableID: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
+              )
+            ])
           ),
           reducer: BluetoothPeripheralListReducer,
           environment: BluetoothPeripheralListEnvironment(
