@@ -45,12 +45,12 @@ extension Descriptor {
 
     var associatedValue: Any? {
       switch self {
-        case .characteristicExtendedProperties(let number): return number
-        case .characteristicUserDescription(let string): return string
-        case .clientCharacteristicConfiguration(let number): return number
-        case .serverCharacteristicConfiguration(let number): return number
-        case .characteristicFormat(let data): return data
-        case .characteristicAggregateFormat(let data): return data
+        case let .characteristicExtendedProperties(number): return number
+        case let .characteristicUserDescription(string): return string
+        case let .clientCharacteristicConfiguration(number): return number
+        case let .serverCharacteristicConfiguration(number): return number
+        case let .characteristicFormat(data): return data
+        case let .characteristicAggregateFormat(data): return data
       }
     }
 
