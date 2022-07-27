@@ -11,7 +11,7 @@ public struct Peripheral {
     case didDiscoverIncludedServicesFor(Service, Error?)
 
     // Discovering Characteristics and their Descriptors
-    case didDiscoverCharacteristicFor(Service, Error?)
+    case didDiscoverCharacteristicsFor(Service, Error?)
     case didDiscoverDescriptorsFor(Characteristic, Error?)
 
     // Retrieving Characteristic and Descriptor Values

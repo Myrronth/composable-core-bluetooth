@@ -200,7 +200,7 @@ private class PeripheralDelegate: NSObject, CBPeripheralDelegate {
   func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Swift.Error?) {
     subscriber.send(.peripheral(
       peripheral.identifier,
-      .didDiscoverCharacteristicFor(Service.init(from: service), .init(error))
+      .didDiscoverCharacteristicsFor(Service.init(from: service), .init(error))
     ))
   }
 
