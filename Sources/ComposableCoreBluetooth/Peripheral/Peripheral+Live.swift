@@ -64,38 +64,80 @@ extension Peripheral {
         }
       },
       discoverIncludedServices: { serviceUUIDs, service in
-        .fireAndForget {
+        guard let service = service.rawValue
+        else {
+          couldNotFindRawServiceValue()
+          return .none
+        }
+
+        return .fireAndForget {
           peripheral.discoverIncludedServices(serviceUUIDs, for: service)
         }
       },
-      services: { peripheral.services },
+      services: { peripheral.services?.map(Service.init(from:)) },
       discoverCharacteristics: { characteristicUUIDs, service in
-        .fireAndForget {
+        guard let service = service.rawValue
+        else {
+          couldNotFindRawServiceValue()
+          return .none
+        }
+
+        return .fireAndForget {
           peripheral.discoverCharacteristics(characteristicUUIDs, for: service)
         }
       },
       discoverDescriptors: { characteristic in
-        .fireAndForget {
+        guard let characteristic = characteristic.rawValue
+        else {
+          couldNotFindRawCharacteristicValue()
+          return .none
+        }
+
+        return .fireAndForget {
           peripheral.discoverDescriptors(for: characteristic)
         }
       },
       readValueForCharateristic: { characteristic in
-        .fireAndForget {
+        guard let characteristic = characteristic.rawValue
+        else {
+          couldNotFindRawCharacteristicValue()
+          return .none
+        }
+
+        return .fireAndForget {
           peripheral.readValue(for: characteristic)
         }
       },
       readValueForDescriptor: { descriptor in
-        .fireAndForget {
+        guard let descriptor = descriptor.rawValue
+        else {
+          couldNotFindRawDescriptorValue()
+          return .none
+        }
+
+        return .fireAndForget {
           peripheral.readValue(for: descriptor)
         }
       },
       writeValueForCharacteristic: { data, characteristic, characteristicWriteType in
-        .fireAndForget {
+        guard let characteristic = characteristic.rawValue
+        else {
+          couldNotFindRawCharacteristicValue()
+          return .none
+        }
+
+        return .fireAndForget {
           peripheral.writeValue(data, for: characteristic, type: characteristicWriteType)
         }
       },
       writeValueForDescriptor: { data, descriptor in
-        .fireAndForget {
+        guard let descriptor = descriptor.rawValue
+        else {
+          couldNotFindRawDescriptorValue()
+          return .none
+        }
+
+        return .fireAndForget {
           peripheral.writeValue(data, for: descriptor)
         }
       },
@@ -103,7 +145,13 @@ extension Peripheral {
         peripheral.maximumWriteValueLength(for: characteristicWriteType)
       },
       setNotifyValue: { enabled, characteristic in
-        .fireAndForget {
+        guard let characteristic = characteristic.rawValue
+        else {
+          couldNotFindRawCharacteristicValue()
+          return .none
+        }
+
+        return .fireAndForget {
           peripheral.setNotifyValue(enabled, for: characteristic)
         }
       },
@@ -143,7 +191,7 @@ private class PeripheralDelegate: NSObject, CBPeripheralDelegate {
   func peripheral(_ peripheral: CBPeripheral, didDiscoverIncludedServicesFor service: CBService, error: Swift.Error?) {
     subscriber.send(.peripheral(
       peripheral.identifier,
-      .didDiscoverIncludedServicesFor(service, .init(error))
+      .didDiscoverIncludedServicesFor(Service.init(from: service), .init(error))
     ))
   }
 
@@ -152,7 +200,7 @@ private class PeripheralDelegate: NSObject, CBPeripheralDelegate {
   func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Swift.Error?) {
     subscriber.send(.peripheral(
       peripheral.identifier,
-      .didDiscoverCharacteristicFor(service, .init(error))
+      .didDiscoverCharacteristicFor(Service.init(from: service), .init(error))
     ))
   }
 
@@ -163,7 +211,7 @@ private class PeripheralDelegate: NSObject, CBPeripheralDelegate {
   ) {
     subscriber.send(.peripheral(
       peripheral.identifier,
-      .didDiscoverDescriptorsFor(characteristic, .init(error))
+      .didDiscoverDescriptorsFor(Characteristic.init(from: characteristic), .init(error))
     ))
   }
 
@@ -172,14 +220,14 @@ private class PeripheralDelegate: NSObject, CBPeripheralDelegate {
   func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Swift.Error?) {
     subscriber.send(.peripheral(
       peripheral.identifier,
-      .didUpdateValueForCharacteristic(characteristic, .init(error))
+      .didUpdateValueForCharacteristic(Characteristic.init(from: characteristic), .init(error))
     ))
   }
 
   func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor descriptor: CBDescriptor, error: Swift.Error?) {
     subscriber.send(.peripheral(
       peripheral.identifier,
-      .didUpdateValueForDescriptor(descriptor, .init(error))
+      .didUpdateValueForDescriptor(Descriptor.init(from: descriptor), .init(error))
     ))
   }
 
@@ -188,14 +236,14 @@ private class PeripheralDelegate: NSObject, CBPeripheralDelegate {
   func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Swift.Error?) {
     subscriber.send(.peripheral(
       peripheral.identifier,
-      .didWriteValueForCharacteristic(characteristic, .init(error))
+      .didWriteValueForCharacteristic(Characteristic.init(from: characteristic), .init(error))
     ))
   }
 
   func peripheral(_ peripheral: CBPeripheral, didWriteValueFor descriptor: CBDescriptor, error: Swift.Error?) {
     subscriber.send(.peripheral(
       peripheral.identifier,
-      .didWriteValueForDescriptor(descriptor, .init(error))
+      .didWriteValueForDescriptor(Descriptor.init(from: descriptor), .init(error))
     ))
   }
 
@@ -215,7 +263,7 @@ private class PeripheralDelegate: NSObject, CBPeripheralDelegate {
   ) {
     subscriber.send(.peripheral(
       peripheral.identifier,
-      .didUpdateNotificationStateFor(characteristic, .init(error))
+      .didUpdateNotificationStateFor(Characteristic.init(from: characteristic), .init(error))
     ))
   }
 
@@ -240,7 +288,7 @@ private class PeripheralDelegate: NSObject, CBPeripheralDelegate {
   func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
     subscriber.send(.peripheral(
       peripheral.identifier,
-      .didModifyServices(invalidatedServices)
+      .didModifyServices(invalidatedServices.map(Service.init(from:)))
     ))
   }
 

@@ -2,8 +2,8 @@ import Foundation
 import CoreBluetooth
 
 public struct Central: Equatable {
-
   let rawValue: CBCentral?
+
   public let identifier: UUID
   public let maximumUpdateValueLength: Int
 
@@ -26,7 +26,7 @@ extension Central {
     identifier: UUID,
     maximumUpdateValueLength: Int
   ) -> Self {
-    return Central(
+    return Self(
       identifier: identifier,
       maximumUpdateValueLength: maximumUpdateValueLength
     )

@@ -8,30 +8,30 @@ public struct Peripheral {
   public enum Action: Equatable {
     // Discovering Services
     case didDiscoverServices(Error?)
-    case didDiscoverIncludedServicesFor(CBService, Error?)
+    case didDiscoverIncludedServicesFor(Service, Error?)
 
     // Discovering Characteristics and their Descriptors
-    case didDiscoverCharacteristicFor(CBService, Error?)
-    case didDiscoverDescriptorsFor(CBCharacteristic, Error?)
+    case didDiscoverCharacteristicFor(Service, Error?)
+    case didDiscoverDescriptorsFor(Characteristic, Error?)
 
     // Retrieving Characteristic and Descriptor Values
-    case didUpdateValueForCharacteristic(CBCharacteristic, Error?)
-    case didUpdateValueForDescriptor(CBDescriptor, Error?)
+    case didUpdateValueForCharacteristic(Characteristic, Error?)
+    case didUpdateValueForDescriptor(Descriptor, Error?)
 
     // Writing Characteristic and Descriptor Values
-    case didWriteValueForCharacteristic(CBCharacteristic, Error?)
-    case didWriteValueForDescriptor(CBDescriptor, Error?)
+    case didWriteValueForCharacteristic(Characteristic, Error?)
+    case didWriteValueForDescriptor(Descriptor, Error?)
     case isReadyToSendWriteWithoutResponse
 
     // Managing Notifications for a Characteristic’s Value
-    case didUpdateNotificationStateFor(CBCharacteristic, Error?)
+    case didUpdateNotificationStateFor(Characteristic, Error?)
 
     // Retrieving a Peripheral’s RSSI Data
     case didReadRSSI(NSNumber, Error?)
 
     // Monitoring Changes to a Peripheral’s Properties
     case didUpdateName
-    case didModifyServices([CBService])
+    case didModifyServices([Service])
     case didUpdateState(CBPeripheralState)
     case didUpdateCanSendWriteWithoutResponse(Bool)
     case didUpdateAncsAuthorized(Bool)
@@ -49,24 +49,24 @@ public struct Peripheral {
 
   // Discovering Services
   public var discoverServices: ([CBUUID]?) -> Effect<Never, Never>
-  public var discoverIncludedServices: ([CBUUID]?, CBService) -> Effect<Never, Never>
-  public var services: () -> [CBService]?
+  public var discoverIncludedServices: ([CBUUID]?, Service) -> Effect<Never, Never>
+  public var services: () -> [Service]?
 
   // Discovering Characteristics and Descriptors
-  public var discoverCharacteristics: ([CBUUID]?, CBService) -> Effect<Never, Never>
-  public var discoverDescriptors: (CBCharacteristic) -> Effect<Never, Never>
+  public var discoverCharacteristics: ([CBUUID]?, Service) -> Effect<Never, Never>
+  public var discoverDescriptors: (Characteristic) -> Effect<Never, Never>
 
   // Reading Characteristic and Descriptor Values
-  public var readValueForCharateristic: (CBCharacteristic) -> Effect<Never, Never>
-  public var readValueForDescriptor: (CBDescriptor) -> Effect<Never, Never>
+  public var readValueForCharateristic: (Characteristic) -> Effect<Never, Never>
+  public var readValueForDescriptor: (Descriptor) -> Effect<Never, Never>
 
   // Writing Characteristic and Descriptor Values
-  public var writeValueForCharacteristic: (Data, CBCharacteristic, CBCharacteristicWriteType) -> Effect<Never, Never>
-  public var writeValueForDescriptor: (Data, CBDescriptor) -> Effect<Never, Never>
+  public var writeValueForCharacteristic: (Data, Characteristic, CBCharacteristicWriteType) -> Effect<Never, Never>
+  public var writeValueForDescriptor: (Data, Descriptor) -> Effect<Never, Never>
   public var maximumWriteValueLength: (CBCharacteristicWriteType) -> Int
 
   // Setting Notifications for a Characteristic’s Value
-  public var setNotifyValue: (Bool, CBCharacteristic) -> Effect<Never, Never>
+  public var setNotifyValue: (Bool, Characteristic) -> Effect<Never, Never>
 
   // Monitoring a Peripheral’s Connection State
   public var state: () -> CBPeripheralState

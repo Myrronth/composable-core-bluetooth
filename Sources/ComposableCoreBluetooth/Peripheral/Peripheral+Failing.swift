@@ -15,37 +15,37 @@ extension Peripheral {
     discoverServices: @escaping ([CBUUID]?) -> Effect<Never, Never> = { _ in
       .unimplemented("discoverServices")
     },
-    discoverIncludedServices: @escaping ([CBUUID]?, CBService) -> Effect<Never, Never> = { _, _ in
+    discoverIncludedServices: @escaping ([CBUUID]?, Service) -> Effect<Never, Never> = { _, _ in
       .unimplemented("discoverIncludedServices")
     },
-    services: @escaping () -> [CBService]? = {
+    services: @escaping () -> [Service]? = {
       _fail("services")
       return nil
     },
-    discoverCharacteristics: @escaping ([CBUUID]?, CBService) -> Effect<Never, Never> = { _, _ in
+    discoverCharacteristics: @escaping ([CBUUID]?, Service) -> Effect<Never, Never> = { _, _ in
       .unimplemented("discoverCharacteristics")
     },
-    discoverDescriptors: @escaping (CBCharacteristic) -> Effect<Never, Never> = { _ in
+    discoverDescriptors: @escaping (Characteristic) -> Effect<Never, Never> = { _ in
       .unimplemented("discoverDescriptors")
     },
-    readValueForCharateristic: @escaping (CBCharacteristic) -> Effect<Never, Never> = { _ in
+    readValueForCharateristic: @escaping (Characteristic) -> Effect<Never, Never> = { _ in
       .unimplemented("readValueForCharateristic")
     },
-    readValueForDescriptor: @escaping (CBDescriptor) -> Effect<Never, Never> = { _ in
+    readValueForDescriptor: @escaping (Descriptor) -> Effect<Never, Never> = { _ in
       .unimplemented("readValueForDescriptor")
     },
-    writeValueForCharacteristic: @escaping (Data, CBCharacteristic, CBCharacteristicWriteType)
+    writeValueForCharacteristic: @escaping (Data, Characteristic, CBCharacteristicWriteType)
     -> Effect<Never, Never> = { _, _, _ in
       .unimplemented("writeValueForCharacteristic")
     },
-    writeValueForDescriptor: @escaping (Data, CBDescriptor) -> Effect<Never, Never> = { _, _ in
+    writeValueForDescriptor: @escaping (Data, Descriptor) -> Effect<Never, Never> = { _, _ in
       .unimplemented("writeValueForDescriptor")
     },
     maximumWriteValueLength: @escaping (CBCharacteristicWriteType) -> Int = { _ in
       _fail("maximumWriteValueLength")
       return 0
     },
-    setNotifyValue: @escaping (Bool, CBCharacteristic) -> Effect<Never, Never> = { _, _ in
+    setNotifyValue: @escaping (Bool, Characteristic) -> Effect<Never, Never> = { _, _ in
       .unimplemented("setNotifyValue")
     },
     state: @escaping () -> CBPeripheralState = {
