@@ -61,6 +61,21 @@ extension Characteristic: Equatable {
   }
 }
 
+extension Characteristic: CustomReflectable {
+  public var customMirror: Mirror {
+    Mirror(self, children: [
+      "rawValue": rawValue as Any,
+      "uuid": uuid,
+      "service": service as Any,
+      "value": value as Any,
+      // TODO: How to fix infinite loop?
+//      "descriptors": descriptors() as Any,
+      "properties": properties,
+      "isNotifying": isNotifying
+    ], displayStyle: .struct)
+  }
+}
+
 extension Characteristic {
 
   public static func mock(

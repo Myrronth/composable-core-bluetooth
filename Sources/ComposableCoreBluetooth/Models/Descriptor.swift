@@ -96,6 +96,17 @@ extension Descriptor: Equatable {
   }
 }
 
+extension Descriptor: CustomReflectable {
+  public var customMirror: Mirror {
+    Mirror(self, children: [
+      "rawValue": rawValue as Any,
+      "uuid": uuid,
+      "characteristic": characteristic as Any,
+      "value": value as Any
+    ], displayStyle: .struct)
+  }
+}
+
 extension Descriptor {
 
   public static func mock(identifier: CBUUID, characteristic: Characteristic?, value: Value?) -> Self {

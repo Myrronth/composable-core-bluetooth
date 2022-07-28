@@ -45,6 +45,19 @@ extension Service: Equatable {
   }
 }
 
+extension Service: CustomReflectable {
+  public var customMirror: Mirror {
+    Mirror(self, children: [
+      "rawValue": rawValue as Any,
+      "uuid": uuid,
+      "isPrimary": isPrimary,
+      // TODO: How to fix infinite loop?
+//      "characteristics": characteristics() as Any,
+      "includedServices": includedServices as Any
+    ], displayStyle: .struct)
+  }
+}
+
 extension Service {
 
   public static func mock(
