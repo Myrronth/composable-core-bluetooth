@@ -9,6 +9,9 @@ struct PeripheralState: Equatable, Identifiable {
   let advertismentData: CentralManager.AdvertismentData?
   fileprivate(set) var rssi: NSNumber?
   let cancellableID: AnyHashable
+  fileprivate(set) var services: [Service]?
+
+  fileprivate var automaticallyDiscoverDescriptorsAfterCharacteristicsAreDiscovered = false
 
   init(
     id: UUID,
@@ -27,12 +30,15 @@ struct PeripheralState: Equatable, Identifiable {
 }
 
 enum PeripheralAction: Equatable {
-  // TODO: Whats the best way to make certain actions "private"?
   case onAppear
   case onDisappear
 
   case connect
   case disconnect
+  case discoverServices([CBUUID]?)
+  case discoverIncludedServices([CBUUID]?, Service)
+  case discoverCharacteristicsAndDescriptors([CBUUID]?, Service)
+
   case bluetoothManager(CentralManager.Action)
 }
 
@@ -82,18 +88,96 @@ Reducer<PeripheralState, PeripheralAction, PeripheralEnvironment> { state, actio
         .cancelPeripheralConnection(state.peripheral)
         .fireAndForget()
 
+    case let .discoverServices(serviceUUIDs):
+      return state.peripheral
+        .discoverServices(serviceUUIDs)
+        .fireAndForget()
+
+    case let .discoverIncludedServices(serviceUUIDs, service):
+      return state.peripheral
+        .discoverIncludedServices(serviceUUIDs, service)
+        .fireAndForget()
+
+    case let .discoverCharacteristicsAndDescriptors(characteristicUUIDs, service):
+      state.automaticallyDiscoverDescriptorsAfterCharacteristicsAreDiscovered = true
+      return state.peripheral
+        .discoverCharacteristics(characteristicUUIDs, service)
+        .fireAndForget()
+
     case let .bluetoothManager(.didConnect(peripheral)):
       return connectedEffect(peripheral)
 
     case let .bluetoothManager(.peripheral(identifier, .didReadRSSI(rssi, error))):
-      state.rssi = rssi
+      guard identifier == state.peripheral.identifier
+      else { return .none }
+
+      if error == nil {
+        state.rssi = rssi
+      }
       return .none
 
     case let .bluetoothManager(.peripheral(identifier, .didUpdateState(peripheralState))):
+      guard identifier == state.peripheral.identifier
+      else { return .none }
+
       state.peripheralState = peripheralState
+      return .none
+
+    case let .bluetoothManager(.peripheral(identifier, .didDiscoverServices(error))):
+      guard identifier == state.peripheral.identifier
+      else { return .none }
+
+      if error == nil {
+        state.services = state.peripheral.services() ?? []
+      }
+      return .none
+
+    case let .bluetoothManager(.peripheral(identifier, .didDiscoverIncludedServicesFor(service, error))):
+      guard identifier == state.peripheral.identifier
+      else { return .none }
+
+      if error == nil {
+        state.services = state.peripheral.services() ?? []
+      }
+      return .none
+
+    case let .bluetoothManager(.peripheral(identifier, .didDiscoverCharacteristicsFor(service, error))):
+      guard identifier == state.peripheral.identifier
+      else { return .none }
+
+      if error == nil {
+        state.services = state.peripheral.services() ?? []
+
+        if
+          let services = state.services,
+          state.automaticallyDiscoverDescriptorsAfterCharacteristicsAreDiscovered
+        {
+          let effects: [Effect<PeripheralAction, Never>] = services
+            .flatMap { service in
+              service.characteristics() ?? []
+            }
+            .map { characteristic in
+              state.peripheral
+                .discoverDescriptors(characteristic)
+                .fireAndForget()
+            }
+
+          return .merge(effects)
+        }
+      }
+      return .none
+
+    case let .bluetoothManager(.peripheral(identifier, .didDiscoverDescriptorsFor(characteristic, error))):
+      guard identifier == state.peripheral.identifier
+      else { return .none }
+
+      state.automaticallyDiscoverDescriptorsAfterCharacteristicsAreDiscovered = false
+      if error == nil {
+        state.services = state.peripheral.services() ?? []
+      }
       return .none
 
     case .bluetoothManager:
       return .none
   }
-}
+}.debug()
