@@ -1,12 +1,12 @@
 import CoreBluetooth
 
-public struct Characteristic: Equatable {
+public struct Characteristic {
   let rawValue: CBCharacteristic?
   
   public let uuid: CBUUID
   public let service: Service?
   public let value: Data?
-  public let descriptors: [Descriptor]?
+  public let descriptors: () -> [Descriptor]?
   public let properties: CBCharacteristicProperties
   public let isNotifying: Bool
 
@@ -15,7 +15,7 @@ public struct Characteristic: Equatable {
     uuid = characteristic.uuid
     service = characteristic.service.map(Service.init(from:))
     value = characteristic.value
-    descriptors = characteristic.descriptors?.map(Descriptor.init(from:))
+    descriptors = { characteristic.descriptors?.map(Descriptor.init(from:)) }
     properties = characteristic.properties
     isNotifying = characteristic.isNotifying
   }
@@ -24,7 +24,7 @@ public struct Characteristic: Equatable {
     identifier: CBUUID,
     service: Service?,
     value: Data?,
-    descriptors: [Descriptor]?,
+    descriptors: @escaping () -> [Descriptor]?,
     properties: CBCharacteristicProperties,
     isNotifying: Bool
   ) {
@@ -42,13 +42,32 @@ extension Characteristic: Identifiable {
   public var id: CBUUID { uuid }
 }
 
+extension Characteristic: Equatable {
+  public static func == (lhs: Characteristic, rhs: Characteristic) -> Bool {
+    lhs.rawValue == rhs.rawValue &&
+    lhs.uuid == rhs.uuid &&
+    lhs.value == rhs.value &&
+    lhs.descriptors() == rhs.descriptors() &&
+    lhs.properties == rhs.properties &&
+    lhs.isNotifying == rhs.isNotifying &&
+    // Here we explicitly check for service property without
+    // checking its characteristics for equality
+    // to avoid recursion which leads to stack overflow
+    lhs.service?.rawValue == rhs.service?.rawValue &&
+    lhs.service?.uuid == rhs.service?.uuid &&
+    lhs.service?.characteristics()?.count == rhs.service?.characteristics()?.count &&
+    lhs.service?.includedServices == rhs.service?.includedServices &&
+    lhs.service?.isPrimary == rhs.service?.isPrimary
+  }
+}
+
 extension Characteristic {
 
   public static func mock(
     identifier: CBUUID,
     service: Service?,
     value: Data?,
-    descriptors: [Descriptor]?,
+    descriptors: @escaping () -> [Descriptor]?,
     properties: CBCharacteristicProperties,
     isNotifying: Bool
   ) -> Self {

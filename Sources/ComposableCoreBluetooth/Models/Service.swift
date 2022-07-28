@@ -1,11 +1,11 @@
 import CoreBluetooth
 
-public struct Service: Equatable {
+public struct Service {
   let rawValue: CBService?
   
   public let uuid: CBUUID
   public let isPrimary: Bool
-  public let characteristics: [Characteristic]?
+  public let characteristics: () -> [Characteristic]?
   public let includedServices: [Service]?
 
   init(from service: CBService) {
@@ -13,14 +13,14 @@ public struct Service: Equatable {
 
     uuid = service.uuid
     isPrimary = service.isPrimary
-    characteristics = service.characteristics?.map(Characteristic.init(from:))
+    characteristics = { service.characteristics?.map(Characteristic.init(from:)) }
     includedServices = service.includedServices?.map(Service.init(from:))
   }
 
   init(
     identifier: CBUUID,
     isPrimary: Bool,
-    characteristics: [Characteristic]?,
+    characteristics: @escaping () -> [Characteristic]?,
     includedServices: [Service]?
   ) {
     rawValue = nil
@@ -35,12 +35,22 @@ extension Service: Identifiable {
   public var id: CBUUID { uuid }
 }
 
+extension Service: Equatable {
+  public static func == (lhs: Service, rhs: Service) -> Bool {
+    lhs.rawValue == rhs.rawValue &&
+    lhs.uuid == rhs.uuid &&
+    lhs.isPrimary == rhs.isPrimary &&
+    lhs.characteristics() == rhs.characteristics() &&
+    lhs.includedServices == rhs.includedServices
+  }
+}
+
 extension Service {
 
   public static func mock(
     identifier: CBUUID,
     isPrimary: Bool,
-    characteristics: [Characteristic]?,
+    characteristics: @escaping () -> [Characteristic]?,
     includedServices: [Service]?
   ) -> Self {
     return Self(

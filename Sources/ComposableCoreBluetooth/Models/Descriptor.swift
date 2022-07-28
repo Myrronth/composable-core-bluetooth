@@ -1,6 +1,6 @@
 import CoreBluetooth
 
-public struct Descriptor: Equatable {
+public struct Descriptor {
   let rawValue: CBDescriptor?
 
   public let uuid: CBUUID
@@ -69,6 +69,31 @@ extension Descriptor {
 
 extension Descriptor: Identifiable {
   public var id: CBUUID { uuid }
+}
+
+extension Descriptor: Equatable {
+  public static func == (lhs: Descriptor, rhs: Descriptor) -> Bool {
+    lhs.rawValue == rhs.rawValue &&
+    lhs.uuid == rhs.uuid &&
+    lhs.value == rhs.value &&
+    // Here we explicitly check for characteristic property without
+    // checking its descriptors for equality
+    // to avoid recursion which leads to stack overflow
+    lhs.characteristic?.rawValue == rhs.characteristic?.rawValue &&
+    lhs.characteristic?.uuid == rhs.characteristic?.uuid &&
+    lhs.characteristic?.value == rhs.characteristic?.value &&
+    lhs.characteristic?.descriptors()?.count == rhs.characteristic?.descriptors()?.count &&
+    lhs.characteristic?.properties == rhs.characteristic?.properties &&
+    lhs.characteristic?.isNotifying == rhs.characteristic?.isNotifying &&
+    // Here we explicitly check for service property without
+    // checking its characteristics for equality
+    // to avoid recursion which leads to stack overflow
+    lhs.characteristic?.service?.rawValue == rhs.characteristic?.service?.rawValue &&
+    lhs.characteristic?.service?.uuid == rhs.characteristic?.service?.uuid &&
+    lhs.characteristic?.service?.characteristics()?.count == rhs.characteristic?.service?.characteristics()?.count &&
+    lhs.characteristic?.service?.includedServices == rhs.characteristic?.service?.includedServices &&
+    lhs.characteristic?.service?.isPrimary == rhs.characteristic?.service?.isPrimary
+  }
 }
 
 extension Descriptor {
