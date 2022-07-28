@@ -9,6 +9,7 @@ struct BluetoothPeripheralListView: View {
     self.store = store
   }
 
+  // TODO: Add auto-connect
   var body: some View {
     WithViewStore(store) { viewStore in
       NavigationView {
