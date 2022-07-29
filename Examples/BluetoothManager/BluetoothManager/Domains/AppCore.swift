@@ -103,6 +103,15 @@ let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
 
       case ._discoverPeripherals:
         var retrievedPeripherals: [Peripheral] = []
+        var effects: [Effect<AppAction, Never>] = [
+          environment.bluetoothManager
+            .scanForPeripheralsWithServices(
+              Config.Bluetooth.mandatoryServices,
+              .init(
+                allowDuplicates: Config.Bluetooth.allowDuplicatesAndUndiscover
+              ))
+            .fireAndForget()
+        ]
 
         // Retrieve already connected peripherals by persisted peripherals UUIDs
         if
@@ -148,17 +157,19 @@ let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
                 cancellableID: cancellableID
               )
             )
+
+            if Config.Bluetooth.automaticallyConnectToPreviouslyConnectedPeripherals {
+              effects.append(
+                environment.bluetoothManager
+                  .connect(peripheral)
+                  .fireAndForget()
+              )
+            }
           }
         }
 
         // Discover new peripherals based on service UUIDs
-        return environment.bluetoothManager
-          .scanForPeripheralsWithServices(
-            Config.Bluetooth.mandatoryServices,
-            .init(
-              allowDuplicates: Config.Bluetooth.allowDuplicatesAndUndiscover
-            ))
-          .fireAndForget()
+        return .merge(effects)
 
       case let .removeDiscoveredPeripheral(peripheralStateIdentifier):
         var effects: [Effect<AppAction, Never>] = []
