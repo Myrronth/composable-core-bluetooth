@@ -53,6 +53,7 @@ struct BluetoothPeripheralListView: View {
           Button(buttonTitle) {
             viewStore.send(viewStore.isBluetoothScanning ? .stopBluetoothScan : .startBluetoothScan)
           }
+          .disabled(!viewStore.isBluetoothPoweredOn)
         })
       }
       .navigationViewStyle(.stack)
@@ -66,15 +67,19 @@ struct BluetoothPeripheralListView: View {
 struct BluetoothPeripheralListView_Previews: PreviewProvider {
   static var previews: some View {
     Group {
+      let bluetoothManager = CentralManager.mock(delegate: { .none })
+
       BluetoothPeripheralListView(
         store: Store(
           initialState: AppState(
-            isBluetoothScanning: false
+            isBluetoothPoweredOn: bluetoothManager.state() == .poweredOn,
+            isBluetoothScanning: bluetoothManager.isScanning()
           ),
           reducer: appReducer,
           environment: AppEnvironment(
-            bluetoothManager: CentralManager.mock(delegate: { .none }),
-            mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+            bluetoothManager: bluetoothManager,
+            mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
+            userDefaults: UserDefaults.standard
           )
         )
       )
@@ -82,7 +87,8 @@ struct BluetoothPeripheralListView_Previews: PreviewProvider {
       BluetoothPeripheralListView(
         store: Store(
           initialState: AppState(
-            isBluetoothScanning: true,
+            isBluetoothPoweredOn: bluetoothManager.state() == .poweredOn,
+            isBluetoothScanning: bluetoothManager.isScanning(),
             discoveredPeripherals: IdentifiedArrayOf(uniqueElements: [
               PeripheralState(
                 id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!,
@@ -140,8 +146,9 @@ struct BluetoothPeripheralListView_Previews: PreviewProvider {
           ),
           reducer: appReducer,
           environment: AppEnvironment(
-            bluetoothManager: CentralManager.mock(delegate: { .none }),
-            mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+            bluetoothManager: bluetoothManager,
+            mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
+            userDefaults: UserDefaults.standard
           )
         )
       )

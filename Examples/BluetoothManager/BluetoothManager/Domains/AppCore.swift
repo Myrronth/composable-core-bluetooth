@@ -7,11 +7,20 @@ enum Config {
     static let allowDuplicatesAndUndiscover = false
     static let undiscoverAfterSeconds = 5
     static let splitDiscoveredAndConnectedPeripherals = true
+    static let automaticallyConnectToPreviouslyConnectedPeripherals = true
+    static let mandatoryServices = [
+      CBUUID(string: "89145240-0C04-4713-96A4-0C88F15D6120")
+    ]
+  }
+
+  enum UserDefaults {
+    static let previouslyConnectedPeripheralUUIDs = "previouslyConnectedPeripheralUUIDs"
   }
 }
 
 struct AppState: Equatable {
   var shouldStartBluetoothScanningWhenPoweredOn = false
+  var isBluetoothPoweredOn: Bool
   var isBluetoothScanning: Bool
 
   var discoveredPeripherals: IdentifiedArrayOf<PeripheralState> = []
@@ -22,6 +31,7 @@ enum AppAction: Equatable {
   case onAppear
   case startBluetoothScan
   case stopBluetoothScan
+  case _discoverPeripherals
 
   case removeDiscoveredPeripheral(UUID)
   case _removeDiscoveredPeripheral(UUID)
@@ -39,16 +49,7 @@ enum AppAction: Equatable {
 struct AppEnvironment {
   let bluetoothManager: CentralManager
   let mainQueue: AnySchedulerOf<DispatchQueue>
-}
-
-private func scanForPeripheralsEffect(_ bluetoothManager: CentralManager) -> Effect<AppAction, Never> {
-  return bluetoothManager
-    .scanForPeripheralsWithServices([
-      CBUUID(string: "89145240-0C04-4713-96A4-0C88F15D6120")
-    ], .init(
-      allowDuplicates: Config.Bluetooth.allowDuplicatesAndUndiscover
-    ))
-    .fireAndForget()
+  let userDefaults: UserDefaults
 }
 
 let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
@@ -86,7 +87,7 @@ let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
             assertionFailure("Please enable Bluetooth for this app in the iOS settings.")
             return .none
           case .poweredOn:
-            return scanForPeripheralsEffect(environment.bluetoothManager)
+            return .init(value: ._discoverPeripherals)
           default:
             state.shouldStartBluetoothScanningWhenPoweredOn = true
             return .none
@@ -100,13 +101,70 @@ let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
           .init(value: .removeAllDiscoveredPeripherals)
         )
 
+      case ._discoverPeripherals:
+        var retrievedPeripherals: [Peripheral] = []
+
+        // Retrieve already connected peripherals by persisted peripherals UUIDs
+        if
+          let peripheralIdentifiers = environment.userDefaults
+            .stringArray(forKey: Config.UserDefaults.previouslyConnectedPeripheralUUIDs)?
+            .compactMap(UUID.init(uuidString:))
+        {
+          retrievedPeripherals.append(
+            contentsOf: environment.bluetoothManager.retrievePeripheralsWithIdentifiers(peripheralIdentifiers)
+          )
+        }
+
+        // Retrieve already connected peripherals by mandatory services
+        retrievedPeripherals.append(
+          contentsOf: environment.bluetoothManager
+            .retrieveConnectedPeripheralsWithServices(Config.Bluetooth.mandatoryServices)
+        )
+
+        // Append retrieved peripherals to state
+        retrievedPeripherals.forEach { peripheral in
+          let peripheralStateIdentifier = peripheral.identifier
+
+          if peripheral.state() == .connected {
+            let cancellableID = state.connectedPeripherals[id: peripheralStateIdentifier]?.cancellableID
+            ?? AnyHashable(UUID())
+
+            state.connectedPeripherals.updateOrAppend(
+              PeripheralState(
+                id: peripheralStateIdentifier,
+                peripheral: peripheral,
+                cancellableID: cancellableID
+              )
+            )
+          }
+          else {
+            let cancellableID = state.discoveredPeripherals[id: peripheralStateIdentifier]?.cancellableID
+            ?? AnyHashable(UUID())
+
+            state.discoveredPeripherals.updateOrAppend(
+              PeripheralState(
+                id: peripheralStateIdentifier,
+                peripheral: peripheral,
+                cancellableID: cancellableID
+              )
+            )
+          }
+        }
+
+        // Discover new peripherals based on service UUIDs
+        return environment.bluetoothManager
+          .scanForPeripheralsWithServices(
+            Config.Bluetooth.mandatoryServices,
+            .init(
+              allowDuplicates: Config.Bluetooth.allowDuplicatesAndUndiscover
+            ))
+          .fireAndForget()
+
       case let .removeDiscoveredPeripheral(peripheralStateIdentifier):
         var effects: [Effect<AppAction, Never>] = []
-
         if let cancellableID = state.discoveredPeripherals[id: peripheralStateIdentifier]?.cancellableID {
           effects.append(.cancel(id: cancellableID))
         }
-
         effects.append(.init(value: ._removeDiscoveredPeripheral(peripheralStateIdentifier)))
 
         return .merge(effects)
@@ -131,11 +189,9 @@ let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
 
       case let .removeConnectedPeripheral(peripheralStateIdentifier):
         var effects: [Effect<AppAction, Never>] = []
-
         if let cancellableID = state.connectedPeripherals[id: peripheralStateIdentifier]?.cancellableID {
           effects.append(.cancel(id: cancellableID))
         }
-
         effects.append(.init(value: ._removeConnectedPeripheral(peripheralStateIdentifier)))
 
         return .merge(effects)
@@ -148,13 +204,15 @@ let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
         let bluetoothState = environment.bluetoothManager.state()
         switch bluetoothState {
           case .poweredOn:
+            state.isBluetoothPoweredOn = true
             if state.shouldStartBluetoothScanningWhenPoweredOn {
-              return scanForPeripheralsEffect(environment.bluetoothManager)
+              return .init(value: ._discoverPeripherals)
             }
             else {
               return .none
             }
           default:
+            state.isBluetoothPoweredOn = false
             return .none
         }
 
@@ -181,31 +239,61 @@ let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
           )
         )
 
-        var effect: Effect<AppAction, Never> = .none
+        var effects: [Effect<AppAction, Never>] = []
 
         if Config.Bluetooth.allowDuplicatesAndUndiscover {
-          effect = Effect
+          effects.append(
             .init(value: .removeDiscoveredPeripheral(peripheral.identifier))
             .debounce(
               id: peripheral.identifier,
               for: .seconds(Config.Bluetooth.undiscoverAfterSeconds),
               scheduler: environment.mainQueue
             )
+          )
         }
 
-        return effect
+        if
+          Config.Bluetooth.automaticallyConnectToPreviouslyConnectedPeripherals,
+          let peripheralIdentifiers = environment.userDefaults
+            .stringArray(forKey: Config.UserDefaults.previouslyConnectedPeripheralUUIDs)?
+            .compactMap(UUID.init(uuidString:)),
+          peripheralIdentifiers.contains(peripheral.identifier)
+        {
+          effects.append(
+            environment.bluetoothManager
+              .connect(peripheral)
+              .fireAndForget()
+          )
+        }
+
+        return .merge(effects)
 
       case let .bluetoothManager(.didConnect(peripheral)):
+        // Persist peripheral UUID
+        let key = Config.UserDefaults.previouslyConnectedPeripheralUUIDs
+        let identifier = peripheral.identifier.uuidString
+        var peripherals = environment.userDefaults.stringArray(forKey: key) ?? []
+        if peripherals.firstIndex(of: identifier) == nil {
+          peripherals.append(identifier)
+          environment.userDefaults.set(peripherals, forKey: key)
+        }
+
+        // Add peripheral to state
         if Config.Bluetooth.splitDiscoveredAndConnectedPeripherals {
           let peripheralStateIdentifier = peripheral.identifier
-          let connectedPeripheral = state.discoveredPeripherals[id: peripheralStateIdentifier] ??
-          PeripheralState(
-            id: peripheralStateIdentifier,
-            peripheral: peripheral,
-            cancellableID: UUID()
-          )
 
-          state.connectedPeripherals.append(connectedPeripheral)
+          let connectedPeripheral = state.discoveredPeripherals[id: peripheralStateIdentifier] ?? {
+            let cancellableID = state.connectedPeripherals[id: peripheralStateIdentifier]?.cancellableID
+            ?? AnyHashable(UUID())
+
+            return PeripheralState(
+              id: peripheralStateIdentifier,
+              peripheral: peripheral,
+              cancellableID: cancellableID
+            )
+          }()
+
+          state.connectedPeripherals.updateOrAppend(connectedPeripheral)
 
           return .init(value: .removeDiscoveredPeripheral(peripheralStateIdentifier))
         }

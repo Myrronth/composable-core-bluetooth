@@ -80,7 +80,7 @@ Reducer<PeripheralState, PeripheralAction, PeripheralEnvironment> { state, actio
 
     case .connect:
       return environment.bluetoothManager
-        .connect(state.peripheral, nil)
+        .connect(state.peripheral)
         .fireAndForget()
 
     case .disconnect:
@@ -180,4 +180,4 @@ Reducer<PeripheralState, PeripheralAction, PeripheralEnvironment> { state, actio
     case .bluetoothManager:
       return .none
   }
-}.debug()
+}

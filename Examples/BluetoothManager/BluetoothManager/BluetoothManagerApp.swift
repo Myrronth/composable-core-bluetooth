@@ -11,12 +11,14 @@ let appView: () -> BluetoothPeripheralListView = {
     store: Store(
       initialState: AppState(
         shouldStartBluetoothScanningWhenPoweredOn: true,
-        isBluetoothScanning: false
+        isBluetoothPoweredOn: bluetoothManager.state() == .poweredOn,
+        isBluetoothScanning: bluetoothManager.isScanning()
       ),
       reducer: reducer,
       environment: AppEnvironment(
         bluetoothManager: bluetoothManager,
-        mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+        mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
+        userDefaults: UserDefaults.standard
       )
     )
   )
