@@ -25,7 +25,7 @@ let appView: () -> BluetoothPeripheralListView = {
 }
 
 @main
-struct WeatherProAppWrapper {
+struct BluetoothManagerAppWrapper {
   static func main() {
     if #available(iOS 14.0, *) {
       BluetoothManagerApp.main()
