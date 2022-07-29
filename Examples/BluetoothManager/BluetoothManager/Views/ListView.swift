@@ -55,6 +55,7 @@ struct BluetoothPeripheralListView: View {
           }
         })
       }
+      .navigationViewStyle(.stack)
       .onAppear {
         viewStore.send(.onAppear)
       }
